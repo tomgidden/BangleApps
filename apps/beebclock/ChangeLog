@@ -1,2 +1,3 @@
 0.01: Initial commit.  Not very efficient, and widgets not working for some reason.
 0.02: Fixes; widget support
+0.03: Disable hourly chime; Fix date to 'Ddd dd MMM' rather than 'Ddd MMM dd'; Cleaner file management

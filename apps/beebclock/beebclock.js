@@ -3,9 +3,6 @@
 // © 2020, Tom Gidden
 // https://github.com/tomgidden
 
-const storage = require("Storage");
-const filename = 'beebjson';
-
 require('FontTeletext10x18Ascii').add(Graphics);
 
 // Double height text
@@ -241,7 +238,7 @@ Graphics.prototype.drawRotLine = function (sina, cosa, cx, cy, r1, r2) {
                 }
 
                 if (with_digital_date) {
-                    let txt = [da[0], da[1], da[2]].join(" ");
+                    let txt = [da[0], da[2], da[1]].join(" ");
                     if (with_digital_time)
                         G1.drawStringDH(txt, -24, 0, 'R', GW);
                     else
@@ -261,12 +258,6 @@ Graphics.prototype.drawRotLine = function (sina, cosa, cx, cy, r1, r2) {
                 let a = 2.0 * Math.PI * seconds / 60.0;
                 g.drawRotLine(Math.sin(a), Math.cos(a), CX, CY+TM, RC1, R1);
             }
-
-            // Clock chime on the hour.
-            if (hours >= 0 && minutes === 0)
-                try {
-                    Bangle.buzz();
-                } catch (e) { }
 
             // And draw widgets if we're in that mode
             if (with_widgets)
@@ -352,27 +343,29 @@ Graphics.prototype.drawRotLine = function (sina, cosa, cx, cy, r1, r2) {
             faceImg = undefined;
         }
 
-        // Store the settings for next time
-        try {
-            storage.writeJSON(filename, [mode,with_seconds]);
-        } catch (e) {
-            console.log(e);
-        }
-
         // Clear the screen: we need to make sure all parts are cleaned off.
         g.clear();
     };
 
+    // Toggle second-hand on/off -- also makes it more efficient by
+    // scheduling redraws only every minute.
     const changeSeconds = () => {
         with_seconds = !with_seconds;
         drawAll(true);
     };
 
+    // Store the settings for next time
+    E.on('kill', () => {
+        require('Storage').writeJSON("beebclock.json", [mode,with_seconds]);
+    });
+
     Bangle.loadWidgets();
 
     // Restore mode
     try {
-        conf = storage.readJSON(filename);
+        conf = require('Storage').readJSON("beebclock.json");
+        if (!conf)
+            conf = [1, true];
         mode = conf[0];
         with_seconds = conf[1];
     } catch (e) {
